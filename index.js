@@ -31,21 +31,20 @@ server.register([require('inert'), require('vision'), require('hapi-auth-cookie'
     strategy: 'standard',
   });
 
-  /*server.views({
+  server.views({
     engines: {
       hbs: require('handlebars'),
     },
     relativeTo: __dirname,
     path: './app/views',
-    layoutPath: './app/views/layout',
-    partialsPath: './app/views/partials',
     layout: true,
     isCached: false,
-  });*/
+  });
 
   require('./app/models/db');
 
   server.ext('onPreResponse', corsHeaders);
+  server.route(require('./routes'));
   server.route(require('./routesapi'));
 
   server.start((err) => {
