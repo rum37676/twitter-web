@@ -1,0 +1,20 @@
+const TweetApi = require('./app/api/tweetapi');
+const UserApi = require('./app/api/userapi');
+
+module.exports = [
+  { method: 'GET', path: '/api/tweets', config: TweetApi.find },
+  { method: 'GET', path: '/api/tweets/{id}', config: TweetApi.findOne },
+  { method: 'POST', path: '/api/tweets', config: TweetApi.create },
+  { method: 'DELETE', path: '/api/tweets/{id}', config: TweetApi.deleteOne },
+  { method: 'DELETE', path: '/api/tweets', config: TweetApi.deleteAll },
+  { method: 'DELETE', path: '/api/users/{id}/tweets', config: TweetApi.deleteForUser },
+  { method: 'GET', path: '/api/users/{id}/tweets', config: TweetApi.findForUser },
+
+  { method: 'GET', path: '/api/users', config: UserApi.find },
+  { method: 'GET', path: '/api/users/{id}', config: UserApi.findOne },
+  { method: 'POST', path: '/api/users', config: UserApi.create },
+  { method: 'DELETE', path: '/api/users/{id}', config: UserApi.deleteOne },
+  { method: 'DELETE', path: '/api/users', config: UserApi.deleteAll },
+  { method: 'POST', path: '/api/users/authenticate', config: UserApi.authenticate },
+
+];

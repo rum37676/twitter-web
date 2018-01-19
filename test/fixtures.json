@@ -1,0 +1,41 @@
+{
+  "twitterServiceOnline": "https://secure-ocean-98290.herokuapp.com",
+  "twitterServiceLocal": "http://localhost:4000",
+  "users": [
+    {
+      "username": "user1",
+      "name": "User Eins",
+      "email": "user@eins.com",
+      "password": "secret"
+    },
+    {
+      "username": "user2",
+      "name": "User Zwei",
+      "email": "user@zwei.com",
+      "password": "secret"
+    },
+    {
+      "username": "user3",
+      "name": "User Drei",
+      "email": "user@drei.com",
+      "password": "secret"
+    }
+  ],
+  "tweets": [
+    {
+      "text": "test tweet 1"
+    },
+    {
+      "text": "test tweet 2"
+    }
+  ],
+  "newTweet": {
+    "text": "new Tweet"
+  },
+  "newUser": {
+    "username": "user4",
+    "name": "User Vier",
+    "email": "user@vier.com",
+    "password": "secret"
+  }
+}
