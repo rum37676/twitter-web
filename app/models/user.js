@@ -7,6 +7,7 @@ const userSchema = mongoose.Schema({
   name: String,
   email: String,
   password: String,
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', default: [] }],
 });
 
 const User = mongoose.model('User', userSchema);

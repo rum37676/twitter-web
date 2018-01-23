@@ -2,7 +2,7 @@
 
 const User = require('../models/user');
 const Boom = require('boom');
-const utils = require('./utils.js');
+const Utils = require('./utils.js');
 
 exports.find = {
 
@@ -11,7 +11,7 @@ exports.find = {
   },
 
   handler: function (request, reply) {
-    User.find({}).exec().then(users => {
+    User.find({}).populate('followers').then(users => {
       reply(users);
     }).catch(err => {
       reply(Boom.badImplementation('error accessing db'));
@@ -65,7 +65,7 @@ exports.deleteAll = {
 
   handler: function (request, reply) {
     User.remove({}).then(err => {
-      reply().code(204);
+      reply(User).code(204);
     }).catch(err => {
       reply(Boom.badImplementation('error removing Users'));
     });
@@ -81,9 +81,34 @@ exports.deleteOne = {
 
   handler: function (request, reply) {
     User.remove({ _id: request.params.id }).then(user => {
-      reply(User).code(204);
+      reply().code(204);
     }).catch(err => {
       reply(Boom.notFound('id not found'));
+    });
+  },
+
+};
+
+exports.addFollower = {
+
+  auth: {
+    strategy: 'jwt',
+  },
+
+  handler: function (request, reply) {
+    const authorization = request.headers.authorization.substring(7);
+    const userId = Utils.decodeToken(authorization).userId;
+
+    User.findOne({ _id: userId }).then(follower => {
+      User.update({ _id: request.params.id }, { $push: { followers: follower } }).populate('followers').then(user => {
+        User.findOne({ _id: request.params.id }).populate('followers').then(user => {
+          reply(user).code(200);
+        });
+      }).catch(err => {
+        reply(Boom.notFound('id not found'));
+      });
+    }).catch(err => {
+      reply(Boom.badImplementation('error adding follower'));
     });
   },
 
@@ -97,13 +122,32 @@ exports.authenticate = {
     const user = request.payload;
     User.findOne({ email: user.email }).then(foundUser => {
       if (foundUser && foundUser.password === user.password) {
-        const token = utils.createToken(foundUser);
+        const token = Utils.createToken(foundUser);
         reply({ success: true, token: token }).code(201);
       } else {
         reply({ success: false, message: 'Authentication failed. User not found.' }).code(201);
       }
     }).catch(err => {
       reply(Boom.notFound('internal db failure'));
+    });
+  },
+
+};
+
+exports.findMe = {
+
+  auth: {
+    strategy: 'jwt',
+  },
+
+  handler: function (request, reply) {
+    const authorization = request.headers.authorization.substring(7);
+    const userId = Utils.decodeToken(authorization).userId;
+
+    User.findOne({ _id: userId }).populate('followers').then(user => {
+      reply(user).code(200);
+    }).catch(err => {
+      reply(Boom.badImplementation('error finding user'));
     });
   },
 
