@@ -50,7 +50,7 @@ const imageStore = {
   },
 
   deleteImage(imageId, response) {
-    cloudinary.v2.uploader.destroy(imageId).then(res => {
+    cloudinary.v2.uploader.destroy(imageId, function (result) {
       console.log('Sucessfully deleted image');
       response();
     });

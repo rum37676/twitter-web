@@ -80,23 +80,21 @@ exports.create = {
     const data = request.payload;
 
     if (typeof data.tweetImage === 'undefined') {
-      console.log('Tweet without image');
+      console.log('create Tweet without image');
       const newTweet = new Tweet();
       newTweet.text = request.payload.tweetText;
       newTweet.tweeter = userInfo.userId;
 
       newTweet.save().then(tweet => {
         Tweet.findOne(tweet).populate('tweeter').then(tweet => {
-          console.log(tweet);
           reply(tweet).code(201);
         });
       }).catch(err => {
         reply(Boom.badImplementation('error creating tweet'));
       });
     } else {
-      console.log('Tweet with image');
+      console.log('create Tweet with image');
       ImageStore.addImage(userInfo.userId, data, function (tweet) {
-        console.log(tweet);
         reply(tweet).code(201);
       });
     }
@@ -135,6 +133,7 @@ exports.deleteOne = {
 
   handler: function (request, reply) {
     Tweet.findOneAndRemove({ _id: request.params.id }).then(tweet => {
+      console.log('Delete Tweet with Text: ' + tweet.text);
       ImageStore.deleteImage(tweet.image_id, function () {
         reply(tweet).code(202);
       });
