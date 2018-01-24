@@ -13,11 +13,11 @@ catch (e) {
   process.exit(1);
 }
 
-const pictureStore = {
+const imageStore = {
 
-  addPicture(userId, data, response) {
-    var name =  data.tweetImage.hapi.filename;
-    var path = __dirname + '/uploads/' + name;
+  addImage(userId, data, response) {
+    var filename =  data.tweetImage.hapi.filename;
+    var path = __dirname + '/uploads/' + filename;
     var file = fs.createWriteStream(path);
 
     file.on('error', function (err) {
@@ -41,7 +41,7 @@ const pictureStore = {
           }
 
           Tweet.findOne(newTweet).populate('tweeter').then(tweet => {
-            console.log('Successfully created new tweet with picture');
+            console.log('Successfully created new tweet with image');
             response(tweet);
           });
         });
@@ -49,27 +49,12 @@ const pictureStore = {
     });
   },
 
-  /*deletePicture(userId, image) {
-    const id = path.parse(image);
-    let album = this.getAlbum(userId);
-    _.remove(album.photos, { img: image });
-    cloudinary.api.delete_resources([id.name], function (result) {
-      console.log(result);
+  deleteImage(imageId, response) {
+    cloudinary.v2.uploader.destroy(imageId).then(res => {
+      console.log('Sucessfully deleted image');
+      response();
     });
   },
-
-  deleteAllPictures(userId) {
-    let album = this.getAlbum(userId);
-    if (album) {
-      album.photos.forEach(photo => {
-        const id = path.parse(photo.img);
-        cloudinary.api.delete_resources([id.name], result => {
-          console.log(result);
-        });
-      });
-      this.store.remove(this.collection, album);
-    }
-  },*/
 };
 
-module.exports = pictureStore;
+module.exports = imageStore;

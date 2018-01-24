@@ -42,9 +42,7 @@ exports.findOne = {
 
 exports.create = {
 
-  auth: {
-    strategy: 'jwt',
-  },
+  auth: false,
 
   handler: function (request, reply) {
     const user = new User(request.payload);
@@ -96,11 +94,19 @@ exports.addFollower = {
   },
 
   handler: function (request, reply) {
-    const authorization = request.headers.authorization.substring(7);
-    const userId = Utils.decodeToken(authorization).userId;
+    const authorization = request.auth.token;
+    const userInfo = Utils.decodeToken(authorization);
 
-    User.findOne({ _id: userId }).then(follower => {
-      User.update({ _id: request.params.id }, { $push: { followers: follower } }).populate('followers').then(user => {
+    User.update({ _id: request.params.id }, { $push: { followers: userInfo.userId } }).then(user => {
+      User.findOne({ _id: request.params.id }).populate('followers').then(user => {
+        reply(user).code(200);
+      });
+    }).catch(err => {
+      reply(Boom.notFound('id not found'));
+    });
+
+    /*User.findOne({ _id: userInfo.userId }).then(follower => {
+      User.update({ _id: request.params.id }, { $push: { followers: follower._id } }).then(user => {
         User.findOne({ _id: request.params.id }).populate('followers').then(user => {
           reply(user).code(200);
         });
@@ -109,7 +115,48 @@ exports.addFollower = {
       });
     }).catch(err => {
       reply(Boom.badImplementation('error adding follower'));
+    });*/
+  },
+
+};
+
+exports.deleteFollower = {
+
+  auth: {
+    strategy: 'jwt',
+  },
+
+  handler: function (request, reply) {
+    const authorization = request.auth.token;
+    const userInfo = Utils.decodeToken(authorization);
+
+
+    User.update({ _id: request.params.id }, { $pull: { followers: userInfo.userId } }).then(user => {
+      User.findOne({ _id: request.params.id }).populate('followers').then(user => {
+        reply(user).code(200);
+      });
+    }).catch(err => {
+      reply(Boom.notFound('id not found'));
     });
+
+    /*User.findOne({ _id: userInfo.userId }).then(follower => {
+      console.log(follower);
+      User.findOne({ _id: request.params.id }).then(follower => {
+        console.log(follower);
+      });
+      User.update({ _id: request.params.id }, { $pull: { followers: follower._id } }).then(user => {
+        console.log(user);
+        User.findOne({ _id: request.params.id }).populate('followers').then(user => {
+          reply(user).code(200);
+        });
+      }).catch(err => {
+        reply(Boom.notFound('id not found'));
+        console.log(err);
+      });
+    }).catch(err => {
+      reply(Boom.badImplementation('error deleting follower'));
+      console.log(err);
+    });*/
   },
 
 };
@@ -141,10 +188,10 @@ exports.findMe = {
   },
 
   handler: function (request, reply) {
-    const authorization = request.headers.authorization.substring(7);
-    const userId = Utils.decodeToken(authorization).userId;
+    const authorization = request.auth.token;
+    const userInfo = Utils.decodeToken(authorization);
 
-    User.findOne({ _id: userId }).populate('followers').then(user => {
+    User.findOne({ _id: userInfo.userId }).populate('followers').then(user => {
       reply(user).code(200);
     }).catch(err => {
       reply(Boom.badImplementation('error finding user'));

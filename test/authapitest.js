@@ -18,7 +18,6 @@ suite('Auth API tests', function () {
     returnedTweets = twitterService.getTweets();
     assert.isNotNull(returnedTweets);
 
-
     twitterService.logout();
     returnedTweets = twitterService.getTweets();
     assert.isNull(returnedTweets);

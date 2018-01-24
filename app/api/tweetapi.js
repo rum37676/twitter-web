@@ -4,7 +4,8 @@ const Tweet = require('../models/tweet');
 const User = require('../models/user');
 const Boom = require('boom');
 const Utils = require('./utils');
-const PictureStore = require('./picture-store');
+const ImageStore = require('./image-store');
+const Async = require('async');
 
 exports.find = {
 
@@ -74,13 +75,12 @@ exports.create = {
   },
 
   handler: function (request, reply) {
-
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
     const data = request.payload;
 
     if (typeof data.tweetImage === 'undefined') {
-      console.log('Tweet without picture');
+      console.log('Tweet without image');
       const newTweet = new Tweet();
       newTweet.text = request.payload.tweetText;
       newTweet.tweeter = userInfo.userId;
@@ -94,40 +94,13 @@ exports.create = {
         reply(Boom.badImplementation('error creating tweet'));
       });
     } else {
-      console.log('Tweet with picture');
-      PictureStore.addPicture(userInfo.userId, data, function (tweet) {
+      console.log('Tweet with image');
+      ImageStore.addImage(userInfo.userId, data, function (tweet) {
         console.log(tweet);
         reply(tweet).code(201);
       });
     }
   },
-
-  /*handler: function (request, reply) {
-    console.log(request.payload);
-
-    const authorization = request.auth.token;
-    const userInfo = Utils.decodeToken(authorization);
-    const data = request.payload;
-
-    if (typeof data.imageList === 'undefined') {
-      console.log('Tweet without picture');
-      const newTweet = new Tweet();
-      newTweet.text = request.payload.text;
-      newTweet.tweeter = userInfo.userId;
-
-      newTweet.save().then(tweet => {
-        reply(tweet).code(201);
-      }).catch(err => {
-        reply(Boom.badImplementation('error creating tweet'));
-      });
-    } else {
-      console.log('Tweet with picture');
-      PictureStore.addPicture(userInfo.userId, data, function (tweet) {
-        console.log(tweet);
-        reply(tweet).code(201);
-      });
-    }
-  },*/
 
 };
 
@@ -138,7 +111,14 @@ exports.deleteAll = {
   },
 
   handler: function (request, reply) {
-    Tweet.remove({}).then(err => {
+    Tweet.find({}).then(tweets => {
+      Async.each(tweets, function (tweet, callback) {
+        tweet.remove().then(res => {
+          ImageStore.deleteImage(tweet.image_id, function () {
+          });
+        });
+      });
+
       reply().code(204);
     }).catch(err => {
       reply(Boom.badImplementation('error removing tweets'));
@@ -154,8 +134,10 @@ exports.deleteOne = {
   },
 
   handler: function (request, reply) {
-    Tweet.remove({ _id: request.params.id }).then(tweet => {
-      reply(tweet).code(202);
+    Tweet.findOneAndRemove({ _id: request.params.id }).then(tweet => {
+      ImageStore.deleteImage(tweet.image_id, function () {
+        reply(tweet).code(202);
+      });
     }).catch(err => {
       reply(Boom.notFound('id not found'));
     });
@@ -171,7 +153,14 @@ exports.deleteAllForUser = {
 
   handler: function (request, reply) {
 
-    Tweet.find({ tweeter: request.params.id }).remove().then(err => {
+    Tweet.find({ tweeter: request.params.id }).then(tweets => {
+      Async.each(tweets, function (tweet, callback) {
+        tweet.remove().then(res => {
+          ImageStore.deleteImage(tweet.image_id, function () {
+          });
+        });
+      });
+
       reply().code(204);
     }).catch(err => {
       reply(Boom.badImplementation('error removing tweets for user'));

@@ -23,14 +23,14 @@
   ],
   "tweets": [
     {
-      "text": "test tweet 1"
+      "tweetText": "test tweet 1"
     },
     {
-      "text": "test tweet 2"
+      "tweetText": "test tweet 2"
     }
   ],
   "newTweet": {
-    "text": "new Tweet"
+    "tweetText": "new Tweet"
   },
   "newUser": {
     "username": "user4",

@@ -1,17 +1,17 @@
 'use strict';
 
 const assert = require('chai').assert;
-const DonationService = require('./twitter-service');
+const TwitterService = require('./twitter-service');
 const fixtures = require('./fixtures.json');
 const _ = require('lodash');
 
-suite('Donation API tests', function () {
+suite('Tweet API tests', function () {
 
   let users = fixtures.users;
   let tweets = fixtures.tweets;
   let newUser = fixtures.newUser;
 
-  const twitterService = new DonationService(fixtures.twitterServiceLocal);
+  const twitterService = new TwitterService(fixtures.twitterServiceLocal);
 
   beforeEach(function () {
     twitterService.login(users[0]);
