@@ -2,7 +2,7 @@
   "users": {
     "_model": "User",
     "user1": {
-      "username": "margeSimspon",
+      "username": "margeSimpson",
       "name": "Margerete Simpson",
       "email": "marge@simpson.com",
       "password": "secret"
@@ -18,6 +18,13 @@
       "name": "User Drei",
       "email": "user@drei.com",
       "password": "secret"
+    },
+    "admin": {
+      "username": "admin",
+      "name": "Herr Admin",
+      "email": "admin@admin.com",
+      "password": "admin",
+      "role": "admin"
     }
   },
   "tweets": {

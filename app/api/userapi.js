@@ -3,6 +3,9 @@
 const User = require('../models/user');
 const Boom = require('boom');
 const Utils = require('./utils.js');
+const Tweet = require('../models/tweet');
+const ImageStore = require('./image-store');
+const Async = require('async');
 
 exports.find = {
 
@@ -46,10 +49,17 @@ exports.create = {
 
   handler: function (request, reply) {
     const user = new User(request.payload);
+    console.log(user);
     user.save().then(newUser => {
+      console.log('201');
       reply(newUser).code(201);
     }).catch(err => {
-      reply(Boom.badImplementation('error creating User'));
+      // Duplicate username or email
+      if (err.message.indexOf('duplicate')) {
+        reply(err.message).code(409);
+      } else {
+        reply(Boom.badImplementation('error creating User'));
+      }
     });
   },
 
@@ -63,7 +73,8 @@ exports.deleteAll = {
 
   handler: function (request, reply) {
     User.remove({}).then(err => {
-      reply(User).code(204);
+      Tweet.remove({});
+      reply().code(204);
     }).catch(err => {
       reply(Boom.badImplementation('error removing Users'));
     });
@@ -78,7 +89,18 @@ exports.deleteOne = {
   },
 
   handler: function (request, reply) {
+    console.log('delete User: ' + request.params.id);
     User.remove({ _id: request.params.id }).then(user => {
+      Tweet.find({ tweeter: request.params.id }).then(tweets => {
+        Async.each(tweets, function (tweet, callback) {
+          tweet.remove().then(res => {
+            ImageStore.deleteImage(tweet.image_id, function () {
+            });
+          });
+        });
+      }).catch(err => {
+        reply(Boom.notFound('id not found'));
+      });
       reply().code(204);
     }).catch(err => {
       reply(Boom.notFound('id not found'));
@@ -118,7 +140,6 @@ exports.deleteFollower = {
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
 
-
     User.update({ _id: request.params.id }, { $pull: { followers: userInfo.userId } }).then(user => {
       User.findOne({ _id: request.params.id }).populate('followers').then(user => {
         reply(user).code(200);
@@ -139,7 +160,7 @@ exports.authenticate = {
     User.findOne({ email: user.email }).then(foundUser => {
       if (foundUser && foundUser.password === user.password) {
         const token = Utils.createToken(foundUser);
-        reply({ success: true, token: token }).code(201);
+        reply({ success: true, token: token, user: foundUser }).code(201);
       } else {
         reply({ success: false, message: 'Authentication failed. User not found.' }).code(201);
       }

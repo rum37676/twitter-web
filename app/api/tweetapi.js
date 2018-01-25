@@ -1,7 +1,6 @@
 'use strict';
 
 const Tweet = require('../models/tweet');
-const User = require('../models/user');
 const Boom = require('boom');
 const Utils = require('./utils');
 const ImageStore = require('./image-store');
