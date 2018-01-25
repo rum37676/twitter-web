@@ -104,18 +104,6 @@ exports.addFollower = {
     }).catch(err => {
       reply(Boom.notFound('id not found'));
     });
-
-    /*User.findOne({ _id: userInfo.userId }).then(follower => {
-      User.update({ _id: request.params.id }, { $push: { followers: follower._id } }).then(user => {
-        User.findOne({ _id: request.params.id }).populate('followers').then(user => {
-          reply(user).code(200);
-        });
-      }).catch(err => {
-        reply(Boom.notFound('id not found'));
-      });
-    }).catch(err => {
-      reply(Boom.badImplementation('error adding follower'));
-    });*/
   },
 
 };
@@ -138,25 +126,6 @@ exports.deleteFollower = {
     }).catch(err => {
       reply(Boom.notFound('id not found'));
     });
-
-    /*User.findOne({ _id: userInfo.userId }).then(follower => {
-      console.log(follower);
-      User.findOne({ _id: request.params.id }).then(follower => {
-        console.log(follower);
-      });
-      User.update({ _id: request.params.id }, { $pull: { followers: follower._id } }).then(user => {
-        console.log(user);
-        User.findOne({ _id: request.params.id }).populate('followers').then(user => {
-          reply(user).code(200);
-        });
-      }).catch(err => {
-        reply(Boom.notFound('id not found'));
-        console.log(err);
-      });
-    }).catch(err => {
-      reply(Boom.badImplementation('error deleting follower'));
-      console.log(err);
-    });*/
   },
 
 };
@@ -192,6 +161,27 @@ exports.findMe = {
     const userInfo = Utils.decodeToken(authorization);
 
     User.findOne({ _id: userInfo.userId }).populate('followers').then(user => {
+      reply(user).code(200);
+    }).catch(err => {
+      reply(Boom.badImplementation('error finding user'));
+    });
+  },
+
+};
+
+exports.updateMe = {
+
+  auth: {
+    strategy: 'jwt',
+  },
+
+  handler: function (request, reply) {
+    const authorization = request.auth.token;
+    const userInfo = Utils.decodeToken(authorization);
+
+    console.log(request.payload);
+
+    User.findOneAndUpdate({ _id: userInfo.userId }, request.payload).then(user => {
       reply(user).code(200);
     }).catch(err => {
       reply(Boom.badImplementation('error finding user'));
