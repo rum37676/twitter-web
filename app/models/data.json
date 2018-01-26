@@ -25,6 +25,13 @@
       "email": "admin@admin.com",
       "password": "admin",
       "role": "admin"
+    },
+    "root": {
+      "username": "root",
+      "name": "root",
+      "email": "root@root.com",
+      "password": "rootpassword",
+      "role": "admin"
     }
   },
   "tweets": {

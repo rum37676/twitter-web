@@ -71,6 +71,7 @@ exports.create = {
   payload: {
     output: 'stream',
     allow: 'multipart/form-data',
+    maxBytes: '104857600',
   },
 
   handler: function (request, reply) {

@@ -74,10 +74,12 @@ exports.deleteAll = {
   handler: function (request, reply) {
     User.find({}).then(users => {
       Async.each(users, function (user, callback) {
-        user.remove().then(res => {
-          ImageStore.deleteImage(user.image_id, function () {
+        if (user.username !== 'root') {
+          user.remove().then(res => {
+            ImageStore.deleteImage(user.image_id, function () {
+            });
           });
-        });
+        }
       });
 
       Tweet.remove({});
@@ -96,23 +98,28 @@ exports.deleteOne = {
   },
 
   handler: function (request, reply) {
-    console.log('delete User: ' + request.params.id);
-    User.findOneAndRemove({ _id: request.params.id }).then(user => {
+    console.log('try delete User: ' + request.params.id);
+    User.findOne({ _id: request.params.id }).then(user => {
+      if (user.username !== 'root') {
+        user.remove();
+        ImageStore.deleteImage(user.image_id, function () {
+        });
 
-      ImageStore.deleteImage(user.image_id, function () {
-      });
-
-      Tweet.find({ tweeter: request.params.id }).then(tweets => {
-        Async.each(tweets, function (tweet, callback) {
-          tweet.remove().then(res => {
-            ImageStore.deleteImage(tweet.image_id, function () {
+        Tweet.find({ tweeter: request.params.id }).then(tweets => {
+          Async.each(tweets, function (tweet, callback) {
+            tweet.remove().then(res => {
+              ImageStore.deleteImage(tweet.image_id, function () {
+              });
             });
           });
+        }).catch(err => {
+          reply(Boom.notFound('id not found'));
         });
-      }).catch(err => {
-        reply(Boom.notFound('id not found'));
-      });
-      reply().code(204);
+
+        reply().code(204);
+      } else {
+        reply().code(403);
+      }
     }).catch(err => {
       reply(Boom.notFound('id not found'));
     });
@@ -231,6 +238,7 @@ exports.addProfilImage = {
   payload: {
     output: 'stream',
     allow: 'multipart/form-data',
+    maxBytes: '104857600',
   },
 
   handler: function (request, reply) {
