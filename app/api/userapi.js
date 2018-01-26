@@ -255,3 +255,15 @@ exports.addProfilImage = {
   },
 
 };
+
+exports.validateUser = {
+
+  auth: {
+    strategy: 'jwt',
+  },
+
+  handler: function (request, reply) {
+    reply().code(200)
+  },
+
+};

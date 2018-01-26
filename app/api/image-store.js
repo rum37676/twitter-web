@@ -77,6 +77,11 @@ const imageStore = {
       cloudinary.uploader.upload(path, result => {
 
         User.findOne({ _id: userId }).then(user => {
+
+          if (user.image_id !== 'uz8vrepoplthcjwxdpc1') {
+            imageStore.deleteImage(user.image_id, function () {});
+          }
+
           user.image_id = result.public_id;
           user.image_src = result.secure_url;
           user.save().then(res => {

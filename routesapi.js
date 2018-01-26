@@ -21,5 +21,6 @@ module.exports = [
   { method: 'DELETE', path: '/api/users/follow/{id}', config: UserApi.deleteFollower },
   { method: 'POST', path: '/api/users/authenticate', config: UserApi.authenticate },
   { method: 'POST', path: '/api/users/image', config: UserApi.addProfilImage },
+  { method: 'GET', path: '/api/users/validate', config: UserApi.validateUser },
 
 ];
