@@ -2,6 +2,7 @@
 
 const cloudinary = require('cloudinary');
 const Tweet = require('../models/tweet');
+const User = require('../models/user');
 const fs = require('fs');
 
 try {
@@ -15,7 +16,7 @@ catch (e) {
 
 const imageStore = {
 
-  addImage(userId, data, response) {
+  addImageTweet(userId, data, response) {
     var filename =  data.tweetImage.hapi.filename;
     var path = __dirname + '/uploads/' + filename;
     var file = fs.createWriteStream(path);
@@ -27,6 +28,8 @@ const imageStore = {
     data.tweetImage.pipe(file);
     data.tweetImage.on('end', function (err) {
       cloudinary.uploader.upload(path, result => {
+        console.log(result);
+
         const newTweet = new Tweet({
           text: data.tweetText,
           tweeter: userId,
@@ -36,12 +39,12 @@ const imageStore = {
 
         newTweet.save(function (err) {
           if (err) {
-            console.log('Error');
+            console.error(err);
             reply().code(500);
           }
 
           Tweet.findOne(newTweet).populate('tweeter').then(tweet => {
-            console.log('Successfully created new tweet with image');
+            console.log('Created new tweet with image');
             response(tweet);
           });
         });
@@ -50,9 +53,41 @@ const imageStore = {
   },
 
   deleteImage(imageId, response) {
-    cloudinary.v2.uploader.destroy(imageId, function (result) {
-      console.log('Sucessfully deleted image');
+    if (imageId === 'uz8vrepoplthcjwxdpc1') {
       response();
+    } else {
+      cloudinary.v2.uploader.destroy(imageId, function (result) {
+        console.log('Deleted image');
+        response();
+      });
+    }
+  },
+
+  uploadProfilImage(userId, image, response) {
+    var filename =  image.hapi.filename;
+    var path = __dirname + '/uploads/' + filename;
+    var file = fs.createWriteStream(path);
+
+    file.on('error', function (err) {
+      console.error(err);
+    });
+
+    image.pipe(file);
+    image.on('end', function (err) {
+      cloudinary.uploader.upload(path, result => {
+
+        User.findOne({ _id: userId }).then(user => {
+          user.image_id = result.public_id;
+          user.image_src = result.secure_url;
+          user.save().then(res => {
+            console.log('Uploaded profil image to ' + user.username);
+            response(user);
+          });
+        }).catch(err => {
+          console.error(err);
+          reply().code(500);
+        });
+      });
     });
   },
 };

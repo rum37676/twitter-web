@@ -49,10 +49,14 @@ define('app',['exports', 'aurelia-framework', 'aurelia-event-aggregator', './ser
     App.prototype.attached = function attached() {
       var _this2 = this;
 
+      console.log('app attached');
       if (this.twitterService.isAuthenticated()) {
-        this.twitterService.getMe();
-        this.au.setRoot('home').then(function () {
-          _this2.router.navigateToRoute('startScreen');
+        Promise.all([this.twitterService.getMe()]).then(function (res) {
+          _this2.au.setRoot('home').then(function () {
+            _this2.router.navigateToRoute('startScreen');
+          });
+        }).catch(function (error) {
+          console.error(error);
         });
       }
     };
@@ -114,6 +118,7 @@ define('home',['exports', 'aurelia-framework', 'services/twitter-service'], func
     };
 
     Home.prototype.attached = function attached() {
+      console.log('home attached');
       if (this.twitterService.isAuthenticated()) {
         this.twitterService.updateData();
       }
@@ -240,6 +245,7 @@ define('nav-bar',['exports', 'aurelia-framework', './services/twitter-service'],
           return navItem.config.role === this.twitterService.ownUser.role.toLowerCase();
         }
       } else {
+        console.log('ownUser data not initialized');
         return false;
       }
     };
@@ -316,9 +322,11 @@ define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-ht
           _this.http.configure(function (configuration) {
             configuration.withHeader('Authorization', 'bearer ' + response.content.token);
           });
+          console.log('authentication successful: logged in user: ' + user.email);
+          _this.ea.publish(new _messages.OwnUserUpdate(status.user));
+        } else {
+          console.log('authentication failed: could not log in user: ' + user.email);
         }
-        console.log('authentication successful: logged in user: ' + user.email);
-        _this.ea.publish(new _messages.OwnUserUpdate(status.user));
         _this.ea.publish(new _messages.LoginStatus(status));
       }).catch(function (error) {
         var status = {
@@ -576,8 +584,21 @@ define('services/twitter-service',['exports', 'aurelia-framework', './fixtures',
       this.ac.post('/api/users/me', user).then(function (res) {
         _this9.getUsers();
         _this9.getMe();
-        _this9.getTweets();
       });
+    };
+
+    TwitterService.prototype.uploadProfilImage = function uploadProfilImage(profilIimage) {
+      var _this10 = this;
+
+      if (profilIimage !== null || profilIimage !== undefined) {
+        var formData = new FormData();
+        formData.append('info', 'This is a profilImage.');
+        formData.append('profilImage', profilIimage);
+
+        this.ac.post('/api/users/image', formData).then(function (res) {
+          _this10.getMe();
+        });
+      }
     };
 
     TwitterService.prototype.isAuthenticated = function isAuthenticated() {
@@ -585,35 +606,35 @@ define('services/twitter-service',['exports', 'aurelia-framework', './fixtures',
     };
 
     TwitterService.prototype.getUsers = function getUsers() {
-      var _this10 = this;
-
-      this.ac.get('/api/users').then(function (res) {
-        _this10.users = res.content;
-        console.log('getUsers');
-        console.log(_this10.users);
-        _this10.ea.publish(new _messages.UserUpdate());
-      });
-    };
-
-    TwitterService.prototype.getMe = function getMe() {
       var _this11 = this;
 
-      this.ac.get('/api/users/me').then(function (res) {
-        _this11.ownUser = res.content;
-        console.log('getMe');
-        console.log(_this11.ownUser);
+      return this.ac.get('/api/users').then(function (res) {
+        _this11.users = res.content;
+        console.log('getUsers');
+        console.log(_this11.users);
         _this11.ea.publish(new _messages.UserUpdate());
       });
     };
 
-    TwitterService.prototype.getTweets = function getTweets() {
+    TwitterService.prototype.getMe = function getMe() {
       var _this12 = this;
 
-      this.ac.get('/api/tweets').then(function (res) {
-        _this12.tweets = res.content;
+      return this.ac.get('/api/users/me').then(function (res) {
+        _this12.ownUser = res.content;
+        console.log('getMe');
+        console.log(_this12.ownUser);
+        _this12.ea.publish(new _messages.UserUpdate());
+      });
+    };
+
+    TwitterService.prototype.getTweets = function getTweets() {
+      var _this13 = this;
+
+      return this.ac.get('/api/tweets').then(function (res) {
+        _this13.tweets = res.content;
         console.log('getTweets');
-        console.log(_this12.tweets);
-        _this12.ea.publish(new _messages.TweetUpdate());
+        console.log(_this13.tweets);
+        _this13.ea.publish(new _messages.TweetUpdate());
       });
     };
 
@@ -983,6 +1004,7 @@ define('viewmodels/profil/profil',['exports', 'aurelia-framework', '../../servic
       _classCallCheck(this, Profil);
 
       this.ownUser = null;
+      this.profilImage = null;
       this.username = '';
       this.name = '';
       this.email = '';
@@ -1010,6 +1032,10 @@ define('viewmodels/profil/profil',['exports', 'aurelia-framework', '../../servic
 
     Profil.prototype.deleteAllTweets = function deleteAllTweets() {
       this.twitterService.deleteAllTweetsForUser(this.ownUser);
+    };
+
+    Profil.prototype.uploadProfilImage = function uploadProfilImage() {
+      this.twitterService.uploadProfilImage(this.profilImage[0]);
     };
 
     return Profil;
@@ -1273,15 +1299,20 @@ define('viewmodels/tweet/tweet',['exports', 'aurelia-framework', '../../services
       this.tweetText = '';
       this.imageList = [];
       this.selectedFiles = null;
+      this.error = false;
 
       this.twitterService = ts;
     }
 
     Tweet.prototype.createTweet = function createTweet() {
-      this.twitterService.saveTweet(this.tweetText, this.imageList[0]);
-      this.tweetText = '';
-      this.selectedFiles = null;
-      this.imageList = [];
+      if (this.tweetText === '' && this.imageList.length === 0) {
+        this.error = true;
+      } else {
+        this.twitterService.saveTweet(this.tweetText, this.imageList[0]);
+        this.tweetText = '';
+        this.selectedFiles = null;
+        this.imageList = [];
+      }
     };
 
     Tweet.prototype.addPicturesToArray = function addPicturesToArray() {
@@ -1537,15 +1568,15 @@ define('text!nav-bar.html', ['module'], function(module) { module.exports = "<te
 define('text!viewmodels/adminSettings/adminSettings.html', ['module'], function(module) { module.exports = "<template><form submit.delegate=\"addUser()\" class=\"ui stacked segment form\"><h3 class=\"ui header\">Add User</h3><div class=\"two fields\"><div class=\"field\"><label>Username</label><input placeholder=\"Username\" type=\"text\" value.bind=\"username\" required></div><div class=\"field\"><label>Name</label><input placeholder=\"Name\" type=\"text\" value.bind=\"name\" required></div></div><div class=\"field\"><label>Email</label><input placeholder=\"Email\" type=\"text\" value.bind=\"email\" required></div><div class=\"field\"><label>Password</label><input type=\"password\" value.bind=\"password\" pattern=\".{6,}\" required title=\"6 characters minimum\"></div><button class=\"ui blue submit button\">Add User</button></form><div class=\"ui negative message transition\" show.bind=\"errorText !== null\"><i class=\"close icon\"></i><div class=\"header\">There was some errors with your submission</div><div class=\"field\"> ${errorText} </div></div><compose view-model=\"../users/users\"></compose></template>"; });
 define('text!viewmodels/dashboard/dashboard.html', ['module'], function(module) { module.exports = "<template><section class=\"ui four column stackable grid basic segment\"><aside class=\"column\"><compose view-model=\"../personalTimeline/personalTimeline\"></compose></aside></section></template>"; });
 define('text!viewmodels/followerTimeline/followerTimeline.html', ['module'], function(module) { module.exports = "<template><h3 class=\"ui dividing header blue attached segment\">Personal Timeline</h3><div class=\"ui horizontal divider\"></div><compose view-model=\"../tweet/tweet\"></compose><compose view-model=\"../timeline/timeline\" model.bind=\"users\"></compose></template>"; });
-define('text!viewmodels/logout/logout.html', ['module'], function(module) { module.exports = "<template><form submit.delegate=\"logout($event)\" class=\"ui stacked segment form\"><h3 class=\"ui header\">Are you sure you want to log out?</h3><button class=\"ui blue submit button\">Logout</button></form></template>"; });
 define('text!viewmodels/globalTimeline/globalTimeline.html', ['module'], function(module) { module.exports = "<template><h3 class=\"ui dividing header blue attached segment\">Global Timeline</h3><div class=\"ui horizontal divider\"></div><compose view-model=\"../tweet/tweet\"></compose><compose view-model=\"../timeline/timeline\" model.bind=\"users\"></compose></template>"; });
 define('text!viewmodels/login/login.html', ['module'], function(module) { module.exports = "<template><form submit.delegate=\"login($event)\" class=\"ui stacked segment form\"><h3 class=\"ui header\">Log-in</h3><div class=\"field\"><label>Email</label><input placeholder=\"Email\" value.bind=\"email\"></div><div class=\"field\"><label>Password</label><input type=\"password\" value.bind=\"password\"></div><div class=\"field\"><label>Remember me</label><input type=\"checkbox\" checked.bind=\"rememberMe\"></div><button class=\"ui blue submit button\">Login</button><h3>${prompt}</h3></form></template>"; });
-define('text!viewmodels/profil/profil.html', ['module'], function(module) { module.exports = "<template><h3 class=\"ui dividing header blue attached segment\">Profil</h3><div class=\"ui horizontal divider\"></div><form submit.delegate=\"update($event)\" class=\"ui stacked segment form\"><div class=\"two fields\"><div class=\"field\"><label>Username</label><input placeholder=\"Username\" type=\"text\" value.bind=\"username\"></div><div class=\"field\"><label>Name</label><input placeholder=\"Name\" type=\"text\" value.bind=\"name\"></div></div><div class=\"field\"><label>Email</label><input placeholder=\"Email\" type=\"text\" value.bind=\"email\"></div><div class=\"field\"><label>Password</label><input type=\"password\" value.bind=\"password\"></div><button class=\"ui submit blue button\"><i class=\"save icon\"></i> Save Account Data</button></form><button class=\"ui blue right floated button\" click.delegate=\"deleteAllTweets()\"><i class=\"trash outline icon\"></i> Delete All Tweets</button><div class=\"ui horizontal divider\"></div><div class=\"ui horizontal divider\"></div><div class=\"ui horizontal divider\"></div><compose view-model=\"../userTimeline/userTimeline\" model.bind=\"{id: ownUser._id}\"></compose></template>"; });
-define('text!viewmodels/signup/signup.html', ['module'], function(module) { module.exports = "<template><form submit.delegate=\"register($event)\" class=\"ui stacked segment form\"><h3 class=\"ui header\">Register</h3><div class=\"two fields\"><div class=\"field\"><label>Username</label><input placeholder=\"Username\" type=\"text\" value.bind=\"username\" required></div><div class=\"field\"><label>Name</label><input placeholder=\"Name\" type=\"text\" value.bind=\"name\" required></div></div><div class=\"field\"><label>Email</label><input placeholder=\"Email\" type=\"text\" value.bind=\"email\" required></div><div class=\"field\"><label>Password</label><input type=\"password\" value.bind=\"password\" pattern=\".{6,}\" required title=\"6 characters minimum\"></div><button class=\"ui blue submit button\">SignUp</button></form><div class=\"ui negative message transition\" show.bind=\"errorText !== null\"><i class=\"close icon\"></i><div class=\"header\">There was some errors with your submission</div><div class=\"field\"> ${errorText} </div></div></template>"; });
+define('text!viewmodels/logout/logout.html', ['module'], function(module) { module.exports = "<template><form submit.delegate=\"logout($event)\" class=\"ui stacked segment form\"><h3 class=\"ui header\">Are you sure you want to log out?</h3><button class=\"ui blue submit button\">Logout</button></form></template>"; });
+define('text!viewmodels/profil/profil.html', ['module'], function(module) { module.exports = "<template><h3 class=\"ui dividing header blue attached segment\">Profil</h3><div class=\"ui horizontal divider\"></div><div class=\"ui grid\"><div class=\"four wide column\"><img src=\"${ownUser.image_src}\" width=\"280\" height=\"200\"><div class=\"grouped inline fields\"><h4>Please select your profil picture <input type=\"file\" accept=\"image/*\" name=\"image\" id=\"image\" files.bind=\"profilImage\"></h4><button class=\"ui submit blue button\" click.delegate=\"uploadProfilImage()\">Upload Image</button></div></div><div class=\"twelve wide column\"><form submit.delegate=\"update($event)\" class=\"ui stacked segment form\"><div class=\"two fields\"><div class=\"field\"><label>Username</label><input placeholder=\"Username\" type=\"text\" value.bind=\"username\" required></div><div class=\"field\"><label>Name</label><input placeholder=\"Name\" type=\"text\" value.bind=\"name\" required></div></div><div class=\"field\"><label>Email</label><input placeholder=\"Email\" type=\"text\" value.bind=\"email\" pattern=\"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$\" required title=\"<placeholder>@<placeholder>.<de,com,...>\"></div><div class=\"field\"><label>Password</label><input type=\"password\" value.bind=\"password\" pattern=\".{6,}\" required title=\"6 characters minimum\"></div><button class=\"ui submit blue button\"><i class=\"save icon\"></i> Save Account Data</button></form></div></div><button class=\"ui blue right floated button\" click.delegate=\"deleteAllTweets()\"><i class=\"trash outline icon\"></i> Delete All Tweets</button><div class=\"ui horizontal divider\"></div><div class=\"ui horizontal divider\"></div><div class=\"ui horizontal divider\"></div><compose view-model=\"../userTimeline/userTimeline\" model.bind=\"{id: ownUser._id}\"></compose></template>"; });
+define('text!viewmodels/signup/signup.html', ['module'], function(module) { module.exports = "<template><form submit.delegate=\"register($event)\" class=\"ui stacked segment form\"><h3 class=\"ui header\">Register</h3><div class=\"two fields\"><div class=\"field\"><label>Username</label><input placeholder=\"Username\" type=\"text\" value.bind=\"username\" required></div><div class=\"field\"><label>Name</label><input placeholder=\"Name\" type=\"text\" value.bind=\"name\" required></div></div><div class=\"field\"><label>Email</label><input placeholder=\"Email\" type=\"text\" value.bind=\"email\" pattern=\"[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$\" required title=\"*@*.*\"></div><div class=\"field\"><label>Password</label><input type=\"password\" value.bind=\"password\" pattern=\".{6,}\" required title=\"6 characters minimum\"></div><button class=\"ui blue submit button\">SignUp</button></form><div class=\"ui negative message transition\" show.bind=\"errorText !== null\"><i class=\"close icon\"></i><div class=\"header\">There was some errors with your submission</div><div class=\"field\"> ${errorText} </div></div></template>"; });
 define('text!viewmodels/startScreen/startScreen.html', ['module'], function(module) { module.exports = "<template></template>"; });
 define('text!viewmodels/timeline/timeline.html', ['module'], function(module) { module.exports = "<template><require from=\"./timeline\"></require><div class=\"ui grid\"><div class=\"three wide column\"></div><div class=\"ten wide column\"><div class=\"ui field piled segment\" repeat.for=\"tweet of tweets\"><div class=\"ui grid\"><div class=\"nine wide column\"><h3 class=\"ui header\">${tweet.tweeter.name} </h3></div><div class=\"right floated column\"><i class=\"large trash outline icon\" click.delegate=\"deleteTweet(tweet)\" show.bind=\"allowDelete(tweet)\"></i></div></div><div class=\"ui divider\"></div><div class=\"field\"> ${tweet.text} </div><div class=\"field\"><img src.bind=\"tweet.image_src\" height=\"auto\" width=\"100%\"><img></div></div></div><div class=\"three wide column\"></div></div></template>"; });
-define('text!viewmodels/tweet/tweet.html', ['module'], function(module) { module.exports = "<template><require from=\"./blob-to-url\"></require><require from=\"./file-list-to-array\"></require><div class=\"ui grid\"><div class=\"three wide column\"></div><div class=\"ten wide column\"><form submit.delegate=\"createTweet()\" class=\"ui form stacked segment\"><div class=\"grouped inline fields\"><label>Text</label><textarea type=\"textarea\" rows=\"3\" maxlength=\"140\" value.bind=\"tweetText\"></textarea></div><div class=\"grouped inline fields\"><label>Image</label><input type=\"file\" accept=\"image/*\" name=\"image\" id=\"image\" files.bind=\"selectedFiles\" change.delegate=\"addPicturesToArray($event)\"><table><tr><th repeat.for=\"file of imageList\"><img src.bind=\"file | blobToUrl\" height=\"200\" width=\"auto\"><img></th></tr></table></div><button class=\"ui blue submit button\">Twittern</button></form></div><div class=\"three wide column\"></div></div></template>"; });
-define('text!viewmodels/usercard/usercard.html', ['module'], function(module) { module.exports = "<template><div class=\"ui piled segment\"><a class=\"header\" route-href=\"route: userTimeline; params.bind: {id: userId}\" style=\"font-size:20px;font-weight:700\">${user.username}</a><div class=\"ui divider\"></div><div class=\"grouped inline fields\"><div class=\"ui field\"><img src=\"src/images/homer4.jpeg\" height=\"150\" width=\"150\" hide.bind=\"hasProfilImage()\"><img></div></div><div class=\"ui divider\"></div><form submit.trigger=\"follow()\" class=\"ui form\" hide.bind=\"adminView\"><button class=\"ui blue submit button\" hide.bind=\"alreadyFollowing\">Follow</button> <button class=\"ui red submit button\" show.bind=\"alreadyFollowing\">Unfollow</button></form><button class=\"ui button\" show.bind=\"adminView\" click.delegate=\"deleteUser(user)\"><i class=\"trash outline icon\"></i> Delete User</button> <button class=\"ui button\" show.bind=\"adminView\" click.delegate=\"deleteTweetsForUser(user)\"><i class=\"trash outline icon\"></i> Delete Tweets</button></div></template>"; });
+define('text!viewmodels/tweet/tweet.html', ['module'], function(module) { module.exports = "<template><require from=\"./blob-to-url\"></require><require from=\"./file-list-to-array\"></require><div class=\"ui grid\"><div class=\"three wide column\"></div><div class=\"ten wide column\"><div class=\"ui icon message\" show.bind=\"error\"><i class=\"warning icon\"></i><div class=\"content\"><div class=\"header\">Empty Tweets are not allowed!</div><p>Please enter a tweet text or a image!</p></div></div><form submit.delegate=\"createTweet()\" class=\"ui form stacked segment\"><div class=\"grouped inline fields\"><label>Text</label><textarea type=\"textarea\" rows=\"3\" maxlength=\"140\" value.bind=\"tweetText\"></textarea></div><div class=\"grouped inline fields\"><label>Image</label><input type=\"file\" accept=\"image/*\" name=\"image\" id=\"image\" files.bind=\"selectedFiles\" change.delegate=\"addPicturesToArray($event)\"><table><tr><th repeat.for=\"file of imageList\"><img src.bind=\"file | blobToUrl\" height=\"200\" width=\"auto\"><img></th></tr></table></div><button class=\"ui blue submit button\">Twittern</button></form></div><div class=\"three wide column\"></div></div></template>"; });
+define('text!viewmodels/usercard/usercard.html', ['module'], function(module) { module.exports = "<template><div class=\"ui piled segment\"><a class=\"header\" route-href=\"route: userTimeline; params.bind: {id: userId}\" style=\"font-size:20px;font-weight:700\">${user.username}</a><div class=\"ui divider\"></div><div class=\"grouped inline fields\"><div class=\"ui field\"><img src=\"${user.image_src}\" height=\"140\" width=\"180\" hide.bind=\"hasProfilImage()\"><img></div></div><div class=\"ui divider\"></div><form submit.trigger=\"follow()\" class=\"ui form\" hide.bind=\"adminView\"><button class=\"ui blue submit button\" hide.bind=\"alreadyFollowing\">Follow</button> <button class=\"ui red submit button\" show.bind=\"alreadyFollowing\">Unfollow</button></form><button class=\"ui button\" show.bind=\"adminView\" click.delegate=\"deleteUser(user)\"><i class=\"trash outline icon\"></i> Delete User</button> <button class=\"ui button\" show.bind=\"adminView\" click.delegate=\"deleteTweetsForUser(user)\"><i class=\"trash outline icon\"></i> Delete Tweets</button></div></template>"; });
 define('text!viewmodels/users/users.html', ['module'], function(module) { module.exports = "<template><h3 class=\"ui dividing header blue attached segment\">User Overview</h3><div class=\"ui horizontal divider\"></div><div class=\"ui link five cards\"><div class=\"card\" repeat.for=\"user of otherUsers\"><compose view-model=\"../usercard/usercard\" model.bind=\"user._id\"></compose></div></div></template>"; });
 define('text!viewmodels/userTimeline/userTimeline.html', ['module'], function(module) { module.exports = "<template><h3 class=\"ui dividing header blue attached segment\"> ${user.username}'s Timeline</h3><div class=\"ui horizontal divider\"></div><compose view-model=\"../timeline/timeline\" model.bind=\"[user]\"></compose></template>"; });
 //# sourceMappingURL=app-bundle.js.map

@@ -31,6 +31,14 @@ const userSchema = mongoose.Schema({
     default: 'user',
     required: true,
   },
+  image_id: {
+    type: String,
+    default: 'uz8vrepoplthcjwxdpc1',
+  },
+  image_src: {
+    type: String,
+    default: 'https://res.cloudinary.com/dnsyhxp5s/image/upload/v1516959420/uz8vrepoplthcjwxdpc1.jpg',
+  },
 });
 
 const User = mongoose.model('User', userSchema);

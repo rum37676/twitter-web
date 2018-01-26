@@ -72,7 +72,14 @@ exports.deleteAll = {
   },
 
   handler: function (request, reply) {
-    User.remove({}).then(err => {
+    User.find({}).then(users => {
+      Async.each(users, function (user, callback) {
+        user.remove().then(res => {
+          ImageStore.deleteImage(user.image_id, function () {
+          });
+        });
+      });
+
       Tweet.remove({});
       reply().code(204);
     }).catch(err => {
@@ -90,7 +97,11 @@ exports.deleteOne = {
 
   handler: function (request, reply) {
     console.log('delete User: ' + request.params.id);
-    User.remove({ _id: request.params.id }).then(user => {
+    User.findOneAndRemove({ _id: request.params.id }).then(user => {
+
+      ImageStore.deleteImage(user.image_id, function () {
+      });
+
       Tweet.find({ tweeter: request.params.id }).then(tweets => {
         Async.each(tweets, function (tweet, callback) {
           tweet.remove().then(res => {
@@ -207,6 +218,32 @@ exports.updateMe = {
     }).catch(err => {
       reply(Boom.badImplementation('error finding user'));
     });
+  },
+
+};
+
+exports.addProfilImage = {
+
+  auth: {
+    strategy: 'jwt',
+  },
+
+  payload: {
+    output: 'stream',
+    allow: 'multipart/form-data',
+  },
+
+  handler: function (request, reply) {
+    const authorization = request.auth.token;
+    const userInfo = Utils.decodeToken(authorization);
+    const data = request.payload;
+
+    if (typeof data.profilImage !== 'undefined') {
+      console.log('uploadProfilImage');
+      ImageStore.uploadProfilImage(userInfo.userId, data.profilImage, function (user) {
+        reply(user).code(202);
+      });
+    }
   },
 
 };

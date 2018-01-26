@@ -93,7 +93,7 @@ exports.create = {
       });
     } else {
       console.log('create Tweet with image');
-      ImageStore.addImage(userInfo.userId, data, function (tweet) {
+      ImageStore.addImageTweet(userInfo.userId, data, function (tweet) {
         reply(tweet).code(201);
       });
     }
