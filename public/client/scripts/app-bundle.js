@@ -254,15 +254,6 @@ define('nav-bar',['exports', 'aurelia-framework', './services/twitter-service'],
     initializer: null
   })), _class2)) || _class);
 });
-define('resources/index',["exports"], function (exports) {
-  "use strict";
-
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  exports.configure = configure;
-  function configure(config) {}
-});
 define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-http-client', './fixtures', 'aurelia-event-aggregator', './messages'], function (exports, _aureliaFramework, _aureliaHttpClient, _fixtures, _aureliaEventAggregator, _messages) {
   'use strict';
 
@@ -293,13 +284,7 @@ define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-ht
 
       this.http = httpClient;
       this.http.configure(function (http) {
-        if (process.env.NODE_ENV !== 'production') {
-          http.withBaseUrl(fixtures.baseUrlLocal);
-          console.log('connecting to ' + fixtures.baseUrlLocal);
-        } else {
-          http.withBaseUrl(fixtures.baseUrlOnline);
-          console.log('connecting to ' + fixtures.baseUrlOnline);
-        }
+        http.withBaseUrl(fixtures.baseUrlOnline);
       });
       this.ea = ea;
     }
@@ -677,6 +662,15 @@ define('services/twitter-service',['exports', 'aurelia-framework', './fixtures',
     return TwitterService;
   }()) || _class);
   exports.default = TwitterService;
+});
+define('resources/index',["exports"], function (exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.configure = configure;
+  function configure(config) {}
 });
 define('viewmodels/admin/admin',['exports', 'aurelia-framework', '../../services/twitter-service', '../../services/messages'], function (exports, _aureliaFramework, _twitterService, _messages) {
   'use strict';
