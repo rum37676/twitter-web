@@ -293,7 +293,13 @@ define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-ht
 
       this.http = httpClient;
       this.http.configure(function (http) {
-        http.withBaseUrl(fixtures.baseUrlLocal);
+        if (process.env.NODE_ENV !== 'production') {
+          http.withBaseUrl(fixtures.baseUrlLocal);
+          console.log('connecting to ' + fixtures.baseUrlLocal);
+        } else {
+          http.withBaseUrl(fixtures.baseUrlOnline);
+          console.log('connecting to ' + fixtures.baseUrlOnline);
+        }
       });
       this.ea = ea;
     }
