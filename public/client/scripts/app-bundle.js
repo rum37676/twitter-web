@@ -32,8 +32,6 @@ define('app',['exports', 'aurelia-framework', 'aurelia-event-aggregator', './ser
       this.twitterService = ts;
       this.ea = ea;
       this.ea.subscribe(_messages.LoginStatus, function (msg) {
-        console.log('app subscribe');
-        console.log(msg);
         if (msg.status.changed === true) {
           _this.router.navigate('/', { replace: true, trigger: false });
           _this.router.reset();
@@ -58,7 +56,6 @@ define('app',['exports', 'aurelia-framework', 'aurelia-event-aggregator', './ser
     };
 
     App.prototype.attached = function attached() {
-      console.log('app attached');
       this.twitterService.isAuthenticated();
     };
 
@@ -227,11 +224,9 @@ define('nav-bar',['exports', 'aurelia-framework', './services/twitter-service'],
       _initDefineProp(this, 'router', _descriptor, this);
 
       this.twitterService = ts;
-      console.log('nav-bar constructor');
     }
 
     NavBar.prototype.showNav = function showNav(navItem) {
-      console.log('nav-bar showNav: ' + navItem.title);
       if (!navItem.config.role) {
         return true;
       }
@@ -251,6 +246,15 @@ define('nav-bar',['exports', 'aurelia-framework', './services/twitter-service'],
     enumerable: true,
     initializer: null
   })), _class2)) || _class);
+});
+define('resources/index',["exports"], function (exports) {
+  "use strict";
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.configure = configure;
+  function configure(config) {}
 });
 define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-http-client', './fixtures', 'aurelia-event-aggregator', './messages'], function (exports, _aureliaFramework, _aureliaHttpClient, _fixtures, _aureliaEventAggregator, _messages) {
   'use strict';
@@ -302,7 +306,6 @@ define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-ht
             changed: true,
             message: 'user is authenticated'
           };
-          console.log('publish: async-http-client: isAuthenticated1');
           _this.ea.publish(new _messages.LoginStatus(status));
           return true;
         }).catch(function (error) {
@@ -312,7 +315,6 @@ define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-ht
             message: 'user is not authenticated'
           };
           _this.clearAuthentication();
-          console.log('publish: async-http-client: isAuthenticated2');
           _this.ea.publish(new _messages.LoginStatus(status));
         });
       }
@@ -334,14 +336,12 @@ define('services/async-http-client',['exports', 'aurelia-framework', 'aurelia-ht
         } else {
           console.log('authentication failed: could not log in user: ' + user.email);
         }
-        console.log('publish: async-http-client: authenticate1');
         _this2.ea.publish(new _messages.LoginStatus(status));
       }).catch(function (error) {
         var status = {
           success: false,
           message: 'service not available'
         };
-        console.log('publish: async-http-client: authenticate2');
         _this2.ea.publish(new _messages.LoginStatus(status));
       });
     };
@@ -505,7 +505,6 @@ define('services/twitter-service',['exports', 'aurelia-framework', './fixtures',
         _this2.ea.publish(new _messages.TweetUpdate());
         _this2.ea.publish(new _messages.UserUpdate());
         _this2.ea.publish(new _messages.OwnUserUpdate(_this2.ownUser));
-        console.log('twitter-service: updateData done');
       }).catch(function (error) {
         console.error(error);
       });
@@ -594,6 +593,7 @@ define('services/twitter-service',['exports', 'aurelia-framework', './fixtures',
       this.ac.post('/api/users/me', user).then(function (res) {
         _this10.getUsers();
         _this10.getMe();
+        _this10.getTweets();
       });
     };
 
@@ -674,15 +674,6 @@ define('services/twitter-service',['exports', 'aurelia-framework', './fixtures',
     return TwitterService;
   }()) || _class);
   exports.default = TwitterService;
-});
-define('resources/index',["exports"], function (exports) {
-  "use strict";
-
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  exports.configure = configure;
-  function configure(config) {}
 });
 define('viewmodels/admin/admin',['exports', 'aurelia-framework', '../../services/twitter-service', '../../services/messages'], function (exports, _aureliaFramework, _twitterService, _messages) {
   'use strict';
@@ -1137,7 +1128,6 @@ define('viewmodels/profil/profil',['exports', 'aurelia-framework', '../../servic
           this.numberOfOwnTweets++;
         }
       }
-      console.log(this.numberOfOwnTweets);
     };
 
     return Profil;
@@ -1730,7 +1720,6 @@ define('viewmodels/users/users',['exports', 'aurelia-framework', '../../services
       this.twitterService = ts;
       this.ea = ea;
       this.updateUsers();
-      console.log('users constructor');
       this.ea.subscribe(_messages.UserUpdate, function (msg) {
         _this.updateUsers();
       });
