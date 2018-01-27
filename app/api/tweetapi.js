@@ -72,7 +72,7 @@ exports.create = {
   },
 
   payload: {
-    //output: 'stream',
+    output: 'stream',
     allow: ['application/json', 'multipart/form-data'],
     maxBytes: '104857600',
   },

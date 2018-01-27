@@ -9,7 +9,7 @@ suite('Auth API tests', function () {
   let users = fixtures.users;
   let loginUser = fixtures.loginUser;
 
-  const twitterService = new TwitterService(fixtures.twitterServiceLocal);
+  const twitterService = new TwitterService(fixtures.twitterServiceOnline);
 
   test('login-logout', function () {
     var returnedTweets = twitterService.getUsers();

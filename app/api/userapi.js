@@ -242,7 +242,7 @@ exports.addProfilImage = {
   },
 
   payload: {
-    //output: 'stream',
+    output: 'stream',
     allow: ['multipart/form-data', 'application/json'],
     maxBytes: '104857600',
   },

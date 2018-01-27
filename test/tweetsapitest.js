@@ -12,7 +12,7 @@ suite('Tweet API tests', function () {
   let newUser = fixtures.newUser;
   let loginUser = fixtures.loginUser;
 
-  const twitterService = new TwitterService(fixtures.twitterServiceLocal);
+  const twitterService = new TwitterService(fixtures.twitterServiceOnline);
 
   beforeEach(function () {
     twitterService.login(loginUser);

@@ -1,5 +1,5 @@
 {
-  "twitterServiceOnline": "https://secure-ocean-98290.herokuapp.com",
+  "twitterServiceOnline": "https://safe-brushlands-98673.herokuapp.com",
   "twitterServiceLocal": "http://localhost:4000",
   "users": [
     {
