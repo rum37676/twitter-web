@@ -40,6 +40,8 @@ class SyncHttpService {
     var res = request('POST', this.baseUrl + url, { json: obj, headers: this.authHeadder });
     if (res.statusCode < 300) {
       returnedObj = JSON.parse(res.getBody('utf8'));
+    } else {
+      console.log(res);
     }
 
     return returnedObj;

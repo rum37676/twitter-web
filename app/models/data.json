@@ -1,6 +1,13 @@
 {
   "users": {
     "_model": "User",
+    "root": {
+      "username": "root",
+      "name": "root",
+      "email": "root@root.com",
+      "password": "rootpassword",
+      "role": "admin"
+    },
     "user1": {
       "username": "margeSimpson",
       "name": "Margerete Simpson",
@@ -24,13 +31,6 @@
       "name": "Herr Admin",
       "email": "admin@admin.com",
       "password": "admin",
-      "role": "admin"
-    },
-    "root": {
-      "username": "root",
-      "name": "root",
-      "email": "root@root.com",
-      "password": "rootpassword",
       "role": "admin"
     }
   },

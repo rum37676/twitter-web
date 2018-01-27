@@ -10,16 +10,18 @@ suite('Tweet API tests', function () {
   let users = fixtures.users;
   let tweets = fixtures.tweets;
   let newUser = fixtures.newUser;
+  let loginUser = fixtures.loginUser;
 
   const twitterService = new TwitterService(fixtures.twitterServiceLocal);
 
   beforeEach(function () {
-    twitterService.login(users[0]);
+    twitterService.login(loginUser);
     twitterService.deleteAllTweets();
   });
 
   afterEach(function () {
     twitterService.deleteAllTweets();
+    twitterService.deleteAllUsers();
     twitterService.logout();
   });
 
@@ -27,9 +29,10 @@ suite('Tweet API tests', function () {
     twitterService.createTweet(tweets[0]);
     const returnedTweets = twitterService.getTweets();
     assert.equal(returnedTweets.length, 1);
-    assert.isDefined(returnedTweets[0].time);
+    assert.isDefined(returnedTweets[0].date);
     assert.isDefined(returnedTweets[0].tweeter);
-    assert(_.some([returnedTweets[0].tweeter], users[0]), 'returned donor must be a superset of user');
+    assert(_.some([returnedTweets[0]], tweets[0]), 'returned tweeter must be a superset of user');
+    assert(_.some([returnedTweets[0].tweeter], loginUser), 'returned tweeter must be a superset of user');
   });
 
   test('create multiple tweets', function () {
@@ -40,7 +43,7 @@ suite('Tweet API tests', function () {
     const returnedTweets = twitterService.getTweets();
     assert.equal(returnedTweets.length, tweets.length);
     for (var i = 0; i < tweets.length; i++) {
-      assert(_.some([returnedTweets[i]], tweets[i]), 'returned donation must be a superset of donation');
+      assert(_.some([returnedTweets[i]], tweets[tweets.length - i - 1]), 'returned tweet must be a superset of tweet');
     }
   });
 
@@ -74,7 +77,7 @@ suite('Tweet API tests', function () {
     const d2 = twitterService.getTweets();
     assert.equal(d2.length, 1);
 
-    assert(_.some([newTweet2], tweets[1]), 'returned donation must be a superset of donation');
+    assert(_.some([newTweet2], tweets[1]), 'returned tweet must be a superset of tweet');
   });
 
   test('get/delete tweet for user', function () {
@@ -94,7 +97,7 @@ suite('Tweet API tests', function () {
     assert.equal(returnedTweets2.length, tweets.length);
 
     for (var i = 0; i < tweets.length; i++) {
-      assert(_.some([returnedTweets2[i]], tweets[i]), 'returned donation must be a superset of donation');
+      assert(_.some([returnedTweets2[i]], tweets[i]), 'returned tweet must be a superset of tweet');
     }
 
     twitterService.deleteTweetsForUser(returnedUser._id);

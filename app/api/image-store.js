@@ -28,10 +28,10 @@ const imageStore = {
     data.tweetImage.pipe(file);
     data.tweetImage.on('end', function (err) {
       cloudinary.uploader.upload(path, result => {
-        console.log(result);
+        //console.log(result);
 
         const newTweet = new Tweet({
-          text: data.tweetText,
+          text: data.text,
           tweeter: userId,
           image_id: result.public_id,
           image_src: result.secure_url,

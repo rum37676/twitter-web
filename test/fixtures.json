@@ -3,9 +3,9 @@
   "twitterServiceLocal": "http://localhost:4000",
   "users": [
     {
-      "username": "user1",
-      "name": "User Eins",
-      "email": "user@eins.com",
+      "username": "margeSimpson",
+      "name": "Margerete Simpson",
+      "email": "marge@simpson.com",
       "password": "secret"
     },
     {
@@ -23,19 +23,25 @@
   ],
   "tweets": [
     {
-      "tweetText": "test tweet 1"
+      "text": "test tweet 1"
     },
     {
-      "tweetText": "test tweet 2"
+      "text": "test tweet 2"
     }
   ],
   "newTweet": {
-    "tweetText": "new Tweet"
+    "text": "new Tweet"
   },
   "newUser": {
     "username": "user4",
     "name": "User Vier",
     "email": "user@vier.com",
     "password": "secret"
+  },
+  "loginUser": {
+    "username": "root",
+    "name": "root",
+    "email": "root@root.com",
+    "password": "rootpassword"
   }
 }

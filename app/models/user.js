@@ -29,7 +29,6 @@ const userSchema = mongoose.Schema({
     type: String,
     enum: ['admin', 'user'],
     default: 'user',
-    required: true,
   },
   image_id: {
     type: String,

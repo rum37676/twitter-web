@@ -7,19 +7,13 @@ const utils = require('./app/api/utils.js');
 var server = new Hapi.Server();
 server.connection({ port: process.env.PORT || 4000 });
 
+require('./app/models/db');
+
 server.register([require('inert'), require('vision'), require('hapi-auth-cookie'), require('hapi-auth-jwt2')], err => {
 
   if (err) {
     throw err;
   }
-
-  server.auth.strategy('standard', 'cookie', {
-    password: 'secretpasswordnotrevealedtoanyone',
-    cookie: 'donation-cookie',
-    isSecure: false,
-    ttl: 24 * 60 * 60 * 1000,
-    redirectTo: '/login',
-  });
 
   server.auth.strategy('jwt', 'jwt', {
     key: 'secretpasswordnotrevealedtoanyone',
@@ -28,7 +22,7 @@ server.register([require('inert'), require('vision'), require('hapi-auth-cookie'
   });
 
   server.auth.default({
-    strategy: 'standard',
+    strategy: 'jwt',
   });
 
   server.views({
@@ -40,8 +34,6 @@ server.register([require('inert'), require('vision'), require('hapi-auth-cookie'
     layout: true,
     isCached: false,
   });
-
-  require('./app/models/db');
 
   server.ext('onPreResponse', corsHeaders);
   server.route(require('./routes'));

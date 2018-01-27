@@ -9,16 +9,17 @@ suite('User API tests', function () {
 
   let users = fixtures.users;
   let newUser = fixtures.newUser;
+  let loginUser = fixtures.loginUser;
 
   const twitterService = new TwitterService(fixtures.twitterServiceLocal);
 
   beforeEach(function () {
-    twitterService.login(users[0]);
-    //donationService.deleteAllUsers();
+    twitterService.deleteAllUsers();
+    twitterService.login(loginUser);
   });
 
   afterEach(function () {
-    //donationService.deleteAllUsers();
+    twitterService.deleteAllUsers();
     twitterService.logout();
   });
 
@@ -61,13 +62,22 @@ suite('User API tests', function () {
     }
 
     const allUsers = twitterService.getUsers();
-    for (var i = 0; i < users.length; i++) {
-      assert(_.some([allUsers[i]], users[i]), 'returnedUser must be a superset of newUser');
+
+    for (var i = 0; i < allUsers.length - 1; i++) {
+      // root user (allUsers[0])
+
+      assert(_.some([allUsers[i + 1]], users[i]), 'returnedUser must be a superset of newUser');
     }
   });
 
-  // test('get all users empty', function () {
-  //   const allUsers = donationService.getUsers();
-  //   assert.equal(allUsers.length, 0);
-  // });
+  test('delete all users', function () {
+    var allUsers =  twitterService.getUsers();
+    for (let user of users) {
+      twitterService.createUser(user);
+    }
+
+    twitterService.deleteAllUsers();
+    // 1 -> root cant be deleted
+    assert.equal(allUsers.length, 1);
+  });
 });

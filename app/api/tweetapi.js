@@ -13,6 +13,7 @@ exports.find = {
   },
 
   handler: function (request, reply) {
+    console.log('TweetAPI: find');
     Tweet.find().sort('-date').populate('tweeter').then(tweets => {
       reply(tweets);
     }).catch(err => {
@@ -29,6 +30,7 @@ exports.findOne = {
   },
 
   handler: function (request, reply) {
+    console.log('TweetAPI: findOne');
     Tweet.findOne({ _id: request.params.id }).populate('tweeter').then(tweet => {
       if (tweet != null) {
         reply(tweet);
@@ -49,6 +51,7 @@ exports.findForUser = {
   },
 
   handler: function (request, reply) {
+    console.log('TweetAPI: findForUser');
     Tweet.find({ tweeter: request.params.id }).populate('tweeter').then(tweet => {
       if (tweet != null) {
         reply(tweet);
@@ -69,12 +72,13 @@ exports.create = {
   },
 
   payload: {
-    output: 'stream',
-    allow: 'multipart/form-data',
+    //output: 'stream',
+    allow: ['application/json', 'multipart/form-data'],
     maxBytes: '104857600',
   },
 
   handler: function (request, reply) {
+    console.log('TweetAPI: create');
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
     const data = request.payload;
@@ -82,7 +86,7 @@ exports.create = {
     if (typeof data.tweetImage === 'undefined') {
       console.log('create Tweet without image');
       const newTweet = new Tweet();
-      newTweet.text = request.payload.tweetText;
+      newTweet.text = request.payload.text;
       newTweet.tweeter = userInfo.userId;
 
       newTweet.save().then(tweet => {
@@ -109,6 +113,7 @@ exports.deleteAll = {
   },
 
   handler: function (request, reply) {
+    console.log('TweetAPI: deleteAll');
     Tweet.find({}).then(tweets => {
       Async.each(tweets, function (tweet, callback) {
         tweet.remove().then(res => {
@@ -132,6 +137,7 @@ exports.deleteOne = {
   },
 
   handler: function (request, reply) {
+    console.log('TweetAPI: deleteOne');
     Tweet.findOneAndRemove({ _id: request.params.id }).then(tweet => {
       console.log('Delete Tweet with Text: ' + tweet.text);
       ImageStore.deleteImage(tweet.image_id, function () {
@@ -151,7 +157,7 @@ exports.deleteAllForUser = {
   },
 
   handler: function (request, reply) {
-
+    console.log('TweetAPI: deleteAllForUser');
     Tweet.find({ tweeter: request.params.id }).then(tweets => {
       Async.each(tweets, function (tweet, callback) {
         tweet.remove().then(res => {

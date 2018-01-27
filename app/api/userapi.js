@@ -14,6 +14,7 @@ exports.find = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: find');
     User.find({}).populate('followers').then(users => {
       reply(users);
     }).catch(err => {
@@ -30,6 +31,7 @@ exports.findOne = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: findOne');
     User.findOne({ _id: request.params.id }).then(user => {
       if (user != null) {
         reply(user);
@@ -48,10 +50,9 @@ exports.create = {
   auth: false,
 
   handler: function (request, reply) {
+    console.log('UserAPI: create');
     const user = new User(request.payload);
-    console.log(user);
     user.save().then(newUser => {
-      console.log('201');
       reply(newUser).code(201);
     }).catch(err => {
       // Duplicate username or email
@@ -72,6 +73,7 @@ exports.deleteAll = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: deleteAll');
     User.find({}).then(users => {
       Async.each(users, function (user, callback) {
         if (user.username !== 'root') {
@@ -98,6 +100,7 @@ exports.deleteOne = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: deleteOne');
     console.log('try delete User: ' + request.params.id);
     User.findOne({ _id: request.params.id }).then(user => {
       if (user.username !== 'root') {
@@ -134,6 +137,7 @@ exports.addFollower = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: addFollower');
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
 
@@ -155,6 +159,7 @@ exports.deleteFollower = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: deleteFollower');
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
 
@@ -174,6 +179,7 @@ exports.authenticate = {
   auth: false,
 
   handler: function (request, reply) {
+    console.log('UserAPI: authenticate');
     const user = request.payload;
     User.findOne({ email: user.email }).then(foundUser => {
       if (foundUser && foundUser.password === user.password) {
@@ -196,6 +202,7 @@ exports.findMe = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: findMe');
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
 
@@ -215,10 +222,9 @@ exports.updateMe = {
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: updateMe');
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
-
-    console.log(request.payload);
 
     User.findOneAndUpdate({ _id: userInfo.userId }, request.payload).then(user => {
       reply(user).code(200);
@@ -236,12 +242,13 @@ exports.addProfilImage = {
   },
 
   payload: {
-    output: 'stream',
-    allow: 'multipart/form-data',
+    //output: 'stream',
+    allow: ['multipart/form-data', 'application/json'],
     maxBytes: '104857600',
   },
 
   handler: function (request, reply) {
+    console.log('UserAPI: addProfilImage');
     const authorization = request.auth.token;
     const userInfo = Utils.decodeToken(authorization);
     const data = request.payload;
@@ -263,7 +270,8 @@ exports.validateUser = {
   },
 
   handler: function (request, reply) {
-    reply().code(200)
+    console.log('UserAPI: validateUser');
+    reply().code(200);
   },
 
 };
